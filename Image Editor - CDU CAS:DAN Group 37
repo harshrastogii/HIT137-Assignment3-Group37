@@ -1,0 +1,37 @@
+# ==================================================
+# Team Member 1: Base Structure
+# ==================================================
+import tkinter as tk
+from tkinter import filedialog, messagebox
+from PIL import Image, ImageTk, ImageEnhance
+
+class ImageEditor(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Image Editor - CDU CAS/DAN Group 37")
+
+        # Image variables
+        self.original_image = None  # Stores the original image loaded by the user
+        self.display_image = None   # Stores the resized image displayed on the canvas
+        self.image_path = None      # Stores the file path of the loaded image
+        self.cropped_image = None   # Stores the cropped image (as a PhotoImage object)
+        self.cropped_image_data = None  # Stores the cropped image (as a PIL image object)
+
+        # Canvas for image display
+        self.canvas = tk.Canvas(self, width=800, height=600)
+        self.canvas.pack(fill="both", expand=True)
+
+        # Text above the load image button
+        self.contributors_text = tk.Label(self, text="Created by : Harsh Rastogi, Kazi Rubaiyat Islam, Rashedul Islam Jisan and Robiul Islam", font=("Sans", 12))
+        self.contributors_text.pack()
+
+        # Load Image Button
+        self.load_button = tk.Button(self, text="Load Image", command=self.load_image)
+        self.load_button.pack()
+
+        # For cropping functionality
+        self.crop_rectangle = None  # Stores the rectangle drawn for cropping
+        self.crop_start_x = self.crop_start_y = 0  # Stores the starting coordinates of the crop rectangle
+
+        # Bind keyboard shortcuts
+        self.bind("<Control-o>", self.load_image_shortcut)
