@@ -87,10 +87,6 @@ class ImageEditor(tk.Tk):
         new_height = int(img_height * ratio)
         return ImageTk.PhotoImage(image.resize((new_width, new_height), Image.LANCZOS))
 
-
-
-
-
 # ==================================================
 # Team Member 3: Image Cropping Functionality
 # ==================================================
