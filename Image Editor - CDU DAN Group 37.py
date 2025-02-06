@@ -313,3 +313,10 @@ class ImageEditor(tk.Tk):
         Handles the keyboard shortcut (Ctrl+O) for loading an image.
         """
         self.load_image()
+
+# ==================================================
+# Main Program Execution
+# ==================================================
+if __name__ == "__main__":
+    app = ImageEditor()
+    app.mainloop()
