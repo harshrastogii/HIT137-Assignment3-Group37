@@ -77,7 +77,3 @@ The project demonstrates our understanding of Object-Oriented Programming (OOP) 
 - The `crop_to_grayscale`, `crop_adjust_brightness`, and `crop_rotate_image` methods provide additional image processing features.
 - The `undo_crop_edit` and `redo_crop_edit` methods allow users to undo or redo their edits.
 - The `save_cropped_image` method saves the edited image to the user's local device.
-
----
-
-## Repository Structure
