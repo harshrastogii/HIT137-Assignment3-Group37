@@ -61,11 +61,11 @@ class ImageEditor(tk.Tk):
         self.display_image = self.resize_to_fit(self.original_image, self.canvas.winfo_width(), self.canvas.winfo_height())
 
         # Display the scaled image on the canvas
+        self.canvas.delete("all")
         self.canvas.image = self.display_image  # Keep a reference to avoid garbage collection
-        self.canvas.create_image(0, 0, anchor=tk.NW, image=self.display_image)
+        self.canvas.create_image(self.canvas.winfo_width()//2, self.canvas.winfo_height()//2, anchor=tk.CENTER, image=self.display_image)
 
         # Reset cropping rectangle
-        self.canvas.delete(self.crop_rectangle)
         self.crop_rectangle = None
 
         # Set up mouse event for cropping
@@ -117,14 +117,26 @@ class ImageEditor(tk.Tk):
         """
         canvas_width, canvas_height = self.canvas.winfo_width(), self.canvas.winfo_height()
         img_width, img_height = self.original_image.size
-        scale_x = img_width / canvas_width
-        scale_y = img_height / canvas_height
+        display_width, display_height = self.display_image.width(), self.display_image.height()
+        
+        scale_x = img_width / display_width
+        scale_y = img_height / display_height
 
         # Ensure valid cropping coordinates
         x1 = max(0, min(self.crop_start_x, event.x))
         y1 = max(0, min(self.crop_start_y, event.y))
         x2 = max(0, max(self.crop_start_x, event.x))
         y2 = max(0, max(self.crop_start_y, event.y))
+
+        # Calculate the offset to center the image on the canvas
+        offset_x = (canvas_width - display_width) // 2
+        offset_y = (canvas_height - display_height) // 2
+
+        # Adjust coordinates based on the offset
+        x1 = max(0, x1 - offset_x)
+        y1 = max(0, y1 - offset_y)
+        x2 = min(display_width, x2 - offset_x)
+        y2 = min(display_height, y2 - offset_y)
 
         crop_box = (
             int(x1 * scale_x),
@@ -268,8 +280,7 @@ class ImageEditor(tk.Tk):
         brightness_slider.set(1)  # Default brightness
         brightness_slider.pack()
 
-
-# Bind the close event to custom function for confirmation
+        # Bind the close event to custom function for confirmation
         crop_window.protocol("WM_DELETE_WINDOW", self.on_close_crop_window(crop_window))
 
     def on_close_crop_window(self, crop_window):
