@@ -160,3 +160,156 @@ class ImageEditor(tk.Tk):
         redo_stack = []
         original_cropped_image = self.cropped_image_data.copy()
 
+# ==================================================
+# Team Member 4: Image Processing & Enhancements
+# ==================================================
+        def apply_edit(edit_func):
+            """
+            Applies an edit to the cropped image and updates the display.
+            - edit_func: A function that performs the edit and returns the modified image.
+            """
+            nonlocal undo_stack, redo_stack
+            undo_stack.append(self.cropped_image_data.copy())
+            redo_stack.clear()  # Clear redo stack after a new edit
+            self.cropped_image_data = edit_func()  # Apply the edit and update the cropped image
+            update_crop_display()
+
+        def undo_crop_edit():
+            """
+            Undoes the last edit applied to the cropped image.
+            """
+            if undo_stack:
+                redo_stack.append(self.cropped_image_data.copy())
+                self.cropped_image_data = undo_stack.pop()
+                update_crop_display()
+
+        def redo_crop_edit():
+            """
+            Redoes the last undone edit applied to the cropped image.
+            """
+            if redo_stack:
+                undo_stack.append(self.cropped_image_data.copy())
+                self.cropped_image_data = redo_stack.pop()
+                update_crop_display()
+
+        def update_crop_display():
+            """
+            Updates the display of the cropped image in the crop window.
+            """
+            self.cropped_image = ImageTk.PhotoImage(self.cropped_image_data)
+            crop_canvas.delete("all")
+            crop_canvas.create_image(0, 0, anchor=tk.NW, image=self.cropped_image)
+            crop_canvas.image = self.cropped_image  # Keep a reference to avoid garbage collection
+
+        def crop_to_grayscale():
+            """
+            Converts the cropped image to grayscale.
+            """
+            apply_edit(lambda: self.cropped_image_data.convert("L"))
+
+        def crop_adjust_brightness(value):
+            """
+            Adjusts the brightness of the cropped image.
+            - value: The brightness factor (0.1 to 2.0).
+            """
+            factor = float(value)
+            apply_edit(lambda: ImageEnhance.Brightness(original_cropped_image).enhance(factor))
+
+        def crop_rotate_image():
+            """
+            Rotates the cropped image by 90 degrees.
+            """
+            apply_edit(lambda: self.cropped_image_data.rotate(90, expand=True))
+
+        def crop_resize_image(value):
+            """
+            Resizes the cropped image based on the slider value.
+            - value: The resize factor (0.1 to 2.0).
+            """
+            factor = float(value)
+            apply_edit(lambda: original_cropped_image.resize(
+                (int(original_cropped_image.width * factor),
+                 int(original_cropped_image.height * factor)),
+                Image.LANCZOS))
+
+        def save_cropped_image():
+            """
+            Saves the cropped image to the user's local device.
+            """
+            if not self.cropped_image_data:
+                messagebox.showerror("Error", "No cropped image to save.")
+                return
+            save_path = filedialog.asksaveasfilename(defaultextension=".png",
+                                                     filetypes=[("PNG files", "*.png"), ("JPEG files", "*.jpg")],
+                                                     parent=crop_window)
+            if save_path:
+                try:
+                    self.cropped_image_data.save(save_path, quality=95)
+                    messagebox.showinfo("Success", "Image saved successfully by G37 Image Editor ", parent=crop_window)
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to save image: {e}")
+
+        # Buttons for editing cropped image
+        tk.Button(crop_window, text="Grayscale", command=crop_to_grayscale).pack()
+        tk.Button(crop_window, text="Rotate", command=crop_rotate_image).pack()
+        tk.Button(crop_window, text="Save", command=save_cropped_image).pack()
+        tk.Button(crop_window, text="Undo", command=undo_crop_edit).pack()
+        tk.Button(crop_window, text="Redo", command=redo_crop_edit).pack()
+
+        # Resize slider for cropped image
+        resize_slider = tk.Scale(crop_window, from_=0.1, to=2.0, resolution=0.1, orient=tk.HORIZONTAL,
+                                 label="Resize Image", command=crop_resize_image)
+        resize_slider.set(1)  # Default resize image factor
+        resize_slider.pack()
+
+        # Brightness slider for cropped image
+        brightness_slider = tk.Scale(crop_window, from_=0.1, to=2.0, resolution=0.1, orient=tk.HORIZONTAL,
+                                      label="Brightness", command=crop_adjust_brightness)
+        brightness_slider.set(1)  # Default brightness
+        brightness_slider.pack()
+
+
+# Bind the close event to custom function for confirmation
+        crop_window.protocol("WM_DELETE_WINDOW", self.on_close_crop_window(crop_window))
+
+    def on_close_crop_window(self, crop_window):
+        def confirm_close():
+            if self.custom_messagebox(crop_window):
+                crop_window.destroy()
+        return confirm_close
+
+    def custom_messagebox(self, parent_window):
+        # Custom message box with 'Save' and 'Don't Save' buttons
+        msg_box = tk.Toplevel(parent_window)
+        msg_box.title("Save Changes")
+        msg_box.geometry("300x150")
+
+        message = tk.Label(msg_box, text="Please make sure your image has been saved with all the edited changes.", wraplength=250)
+        message.pack(pady=20)
+
+        # Custom 'Save' and 'Don't Save' buttons
+        def on_save():
+            msg_box.destroy()
+            return True  # Allows window to close
+
+        def on_dont_save():
+            msg_box.destroy()
+            return False  # Prevents window from closing
+
+        save_button = tk.Button(msg_box, text="Saved", command=on_save)
+        save_button.pack(side="left", padx=20, pady=10)
+
+        dont_save_button = tk.Button(msg_box, text="No Need", command=on_dont_save)
+        dont_save_button.pack(side="right", padx=20, pady=10)
+
+        msg_box.transient(parent_window)  # Makes the message box stay on top of the parent window
+        msg_box.grab_set()  # Ensures the user interacts only with this dialog
+
+        parent_window.wait_window(msg_box)  # Wait for the message box to close
+        return True  # Default return value; change after user interaction
+    
+    def load_image_shortcut(self, event):
+        """
+        Handles the keyboard shortcut (Ctrl+O) for loading an image.
+        """
+        self.load_image()
